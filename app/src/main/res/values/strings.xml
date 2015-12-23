@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">BBQ</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <string name="probe1_txt">Probe 1</string>
+    <string name="probe2_txt">Probe 2</string>
+
+    <string name="error">Error</string>
+    <string name="settings">Settings</string>
+
+    <string name="me_not_configured_text">Device is not online</string>
+
+    <string name="txtProbeDefault">- F</string>
+
+    <string name="connection_error">CONNECTION ERROR</string>
+</resources>

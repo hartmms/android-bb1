@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Particle Info">
+
+        <EditTextPreference
+            android:key="deviceID"
+            android:title="Device ID"
+            android:inputType="text"
+            android:defaultValue=""/>
+
+        <EditTextPreference
+            android:key="particleAPIKEY"
+            android:title="Particle API Key"
+            android:defaultValue=""
+            android:inputType="text"/>
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Target Temperatures">
+        <EditTextPreference
+            android:key="probe1Target"
+            android:inputType="numberDecimal"
+            android:title="Probe 1 Target Temperature"
+            android:defaultValue="0" />
+
+        <EditTextPreference
+            android:key="probe2Target"
+            android:inputType="numberDecimal"
+            android:title="Probe 2 Target Temperature"
+            android:defaultValue="0" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="App Settings">
+
+    <CheckBoxPreference
+        android:key="keep_screen_on"
+        android:title="Keep Screen On"
+        android:summary="Stops the device screen powering off" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

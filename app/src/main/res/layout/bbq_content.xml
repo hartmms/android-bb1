@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.example.hartmms.bbq.MainActivity"
+    tools:showIn="@layout/activity_main">
+
+    <TextView
+        android:id="@+id/txtDebug"
+        android:textSize="@dimen/main_header_text_size"
+        android:textColor="@color/textColorErrorRed"
+        android:text="@string/connection_error"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/useProbe1Temp"
+        android:text="@string/probe1_txt"
+        android:textSize="@dimen/main_header_text_size"
+        android:textColor="@color/lightGrey"
+        android:textStyle="bold"
+        android:layout_below="@id/txtDebug"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/txtProbe1Temp"
+        android:textSize="@dimen/main_stats_text_size"
+        android:text="@string/txtProbeDefault"
+        android:textStyle="bold"
+        android:layout_below="@id/useProbe1Temp"
+        android:textColor="@color/textColorBlue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/useProbe2Temp"
+        android:text="@string/probe2_txt"
+        android:textSize="@dimen/main_header_text_size"
+        android:textColor="@color/lightGrey"
+        android:textStyle="bold"
+        android:layout_below="@id/txtDebug"
+        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/txtProbe2Temp"
+        android:textSize="@dimen/main_stats_text_size"
+        android:textStyle="bold"
+        android:layout_below="@id/useProbe2Temp"
+        android:text="@string/txtProbeDefault"
+        android:layout_alignParentRight="true"
+        android:textColor="@color/textColorBlue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/txtProbe1Temp">
+
+      <!--  <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart1"
+            android:layout_weight="0.5"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+      -->
+
+    </LinearLayout>
+
+
+</RelativeLayout>
