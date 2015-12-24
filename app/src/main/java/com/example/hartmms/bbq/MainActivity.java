@@ -1,8 +1,8 @@
 package com.example.hartmms.bbq;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+//import android.support.design.widget.FloatingActionButton;
+//import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -15,12 +15,16 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.Request.Method;
 import com.android.volley.toolbox.JsonObjectRequest;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.res.Resources;
+import android.support.v4.app.NotificationCompat;
+
 
 
 public class MainActivity extends AppCompatActivity {
@@ -62,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
 //        fab.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
+//                showNotification();
 //                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
 //            }
@@ -72,6 +77,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         mHandler.post(mBBQOnline);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        HTTPClient.getInstance(getBaseContext()).cancellAll("BBQ_JSON");
+        mHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
@@ -102,6 +114,23 @@ public class MainActivity extends AppCompatActivity {
         txtDebug.setVisibility(View.INVISIBLE);
         txtProbe1Temp.setText(String.format("%.0f F", tempF));
     }
+
+    public void showNotification(String guts) {
+        PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
+        Resources r = getResources();
+        Notification notification = new NotificationCompat.Builder(this)
+                .setTicker("test1")
+                .setSmallIcon(android.R.drawable.ic_menu_report_image)
+                .setContentTitle("BBQ Temp")
+                .setContentText(guts)
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .build();
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(0, notification);
+    }
+
 
     private Runnable mBBQOnline = new Runnable() {
         @Override
@@ -135,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                     mHandler.postDelayed(mBBQOnline, 30000);
                 }
             });
-            jsonObjReq.setTag("BBQOnline");
+            jsonObjReq.setTag("BBQ_JSON");
             HTTPClient.getInstance(getBaseContext()).addToRequestQueue(jsonObjReq);
         }
     };
@@ -145,6 +174,8 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             String url = String.format("https://api.particle.io/v1/devices/%s/%s?access_token=%s", deviceID, "resistance", particleAPIKEY);
 //            Log.i("BBQ:URL", "mBBQTemps:" + url);
+            final SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+            final int targetTemp = Integer.parseInt(SP.getString("probe1Target", "999"));
             JsonObjectRequest jsonObjReq = new JsonObjectRequest(Method.GET,
                     url, null, new Response.Listener<JSONObject>() {
                 @Override
@@ -161,6 +192,9 @@ public class MainActivity extends AppCompatActivity {
                         // timestamp = row.getJSONObject("coreInfo").getJSONObject("last_heard");
                         updateTextFields();
                         mHandler.postDelayed(mBBQTemps, 60000);
+//                        if (tempF >= targetTemp) {
+//                            showNotification("Probe 1 reached the target temperature");
+//                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -173,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                      mHandler.postDelayed(mBBQOnline, 30000);
                  }
             });
-            jsonObjReq.setTag("BBQOnline");
+            jsonObjReq.setTag("BBQ_JSON");
             HTTPClient.getInstance(getBaseContext()).addToRequestQueue(jsonObjReq);
         }
     };

@@ -8,12 +8,14 @@
             android:key="deviceID"
             android:title="Device ID"
             android:inputType="text"
+            android:textIsSelectable="true"
             android:defaultValue=""/>
 
         <EditTextPreference
             android:key="particleAPIKEY"
             android:title="Particle API Key"
             android:defaultValue=""
+            android:textIsSelectable="true"
             android:inputType="text"/>
 
     </PreferenceCategory>
@@ -21,15 +23,15 @@
         android:title="Target Temperatures">
         <EditTextPreference
             android:key="probe1Target"
-            android:inputType="numberDecimal"
             android:title="Probe 1 Target Temperature"
-            android:defaultValue="0" />
+            android:numeric="integer"
+            android:defaultValue="999" />
 
         <EditTextPreference
             android:key="probe2Target"
-            android:inputType="numberDecimal"
             android:title="Probe 2 Target Temperature"
-            android:defaultValue="0" />
+            android:numeric="integer"
+            android:defaultValue="999" />
     </PreferenceCategory>
 
     <PreferenceCategory
