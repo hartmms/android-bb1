@@ -24,8 +24,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.res.Resources;
 import android.support.v4.app.NotificationCompat;
-
-
+import android.view.WindowManager;
+import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,16 +43,21 @@ public class MainActivity extends AppCompatActivity {
     TextView txtProbe1Temp;
     TextView txtProbe2Temp;
     TextView txtDebug;
+    SharedPreferences SP;
+
 //    LineChart chart1;
 
     boolean blnDebugOnShow = false;
     Handler mHandler = new Handler();
+    SharedPreferences.OnSharedPreferenceChangeListener listener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
         deviceID = SP.getString("deviceID", null);
         particleAPIKEY = SP.getString("particleAPIKEY", null);
 
@@ -62,6 +67,21 @@ public class MainActivity extends AppCompatActivity {
         txtDebug = (TextView) findViewById(R.id.txtDebug);
         txtProbe1Temp = (TextView) findViewById(R.id.txtProbe1Temp);
         txtProbe2Temp = (TextView) findViewById(R.id.txtProbe2Temp);
+
+        listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+           public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+               Log.i("BBQ","Found a changed preference:"+key);
+               if (key.equals("keep_screen_on")) {
+                   setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
+               } else if (key.equals("deviceID")) {
+                   deviceID = SP.getString("deviceID", null);
+               } else if (key.equals("particleAPIKEY")) {
+                   particleAPIKEY = SP.getString("particleAPIKEY", null);
+               }        // Implementation
+           }
+        };
+        SP.registerOnSharedPreferenceChangeListener(listener);
+
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -76,12 +96,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i("BBQ", "onResume");
         mHandler.post(mBBQOnline);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        Log.i("BBQ", "onPause");
         HTTPClient.getInstance(getBaseContext()).cancellAll("BBQ_JSON");
         mHandler.removeCallbacksAndMessages(null);
     }
@@ -115,6 +137,15 @@ public class MainActivity extends AppCompatActivity {
         txtProbe1Temp.setText(String.format("%.0f F", tempF));
     }
 
+    public void setKeepScreenOn(boolean keep_screen_on) {
+        if (keep_screen_on) {
+            Log.i("BBQ", "keep screen on");
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            Log.i("BBQ", "Allow screen to turn off");
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
     public void showNotification(String guts) {
         PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
         Resources r = getResources();
