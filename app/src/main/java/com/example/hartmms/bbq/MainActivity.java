@@ -10,13 +10,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.content.Intent;
 import android.widget.TextView;
-import android.os.Handler;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.Request.Method;
-import com.android.volley.toolbox.JsonObjectRequest;
-import org.json.JSONException;
-import org.json.JSONObject;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.app.Notification;
@@ -26,31 +19,36 @@ import android.content.res.Resources;
 import android.support.v4.app.NotificationCompat;
 import android.view.WindowManager;
 import android.util.Log;
+import android.os.Message;
+import android.os.Messenger;
+import android.content.ServiceConnection;
+import android.content.Context;
+import android.content.ComponentName;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.os.Handler;
 
 public class MainActivity extends AppCompatActivity {
 
-    boolean Online = false;
-    static double steinhart_a = 0.00024723753;
-    static double steinhart_b = 0.00023402251;
-    static double steinhart_c = 0.00000013879768;
-    double tempK;
-    double tempC;
-    double tempF;
-    float dpWidth = 0;
-    static String deviceID;
-    static String particleAPIKEY;
+
+    SharedPreferences SP;
+
+    private Messenger mBBQServiceMessenger;
+    private boolean mServiceConnected = false;
+//    LineChart chart1;
+
+    boolean blnDebugOnShow = false;
 
     TextView txtProbe1Temp;
     TextView txtProbe2Temp;
     TextView txtDebug;
-    SharedPreferences SP;
-
-//    LineChart chart1;
-
-    boolean blnDebugOnShow = false;
-    Handler mHandler = new Handler();
-    SharedPreferences.OnSharedPreferenceChangeListener listener;
-
+    static String deviceID;
+    static String particleAPIKEY;
+    Messenger mService = null;
+    boolean mIsBound;
+    final Messenger mMessenger = new Messenger(new IncomingHandler());
+    Intent service;
+    int probe1Target, probe2Target;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,24 +58,32 @@ public class MainActivity extends AppCompatActivity {
         setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
         deviceID = SP.getString("deviceID", null);
         particleAPIKEY = SP.getString("particleAPIKEY", null);
-
+        probe1Target = Integer.parseInt(SP.getString("probe1Target", "999"));
+        probe2Target = Integer.parseInt(SP.getString("probe2Target", "999"));
+                
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         txtDebug = (TextView) findViewById(R.id.txtDebug);
         txtProbe1Temp = (TextView) findViewById(R.id.txtProbe1Temp);
         txtProbe2Temp = (TextView) findViewById(R.id.txtProbe2Temp);
+        SharedPreferences.OnSharedPreferenceChangeListener listener;
 
         listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
            public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-               Log.i("BBQ","Found a changed preference:"+key);
+               Log.d("BBQ", "Found a changed preference:" + key);
                if (key.equals("keep_screen_on")) {
                    setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
                } else if (key.equals("deviceID")) {
                    deviceID = SP.getString("deviceID", null);
                } else if (key.equals("particleAPIKEY")) {
                    particleAPIKEY = SP.getString("particleAPIKEY", null);
-               }        // Implementation
+               } else if (key.equals("probe1Target")) {
+                   probe1Target = Integer.parseInt(SP.getString("probe1Target", "999"));
+               } else if (key.equals("probe2Target")) {
+                   probe2Target = Integer.parseInt(SP.getString("probe2Target", "999"));
+               }
+               sendSettings();
            }
         };
         SP.registerOnSharedPreferenceChangeListener(listener);
@@ -93,19 +99,95 @@ public class MainActivity extends AppCompatActivity {
 //        });
     }
 
+
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case BBQService.MSG_COMM_ERROR:
+                    txtDebug.setText(getResources().getString(R.string.connection_error));
+                    txtDebug.setVisibility(View.VISIBLE);
+                    break;
+                case BBQService.MSG_DEVICE_OFFLINE:
+                    txtDebug.setText(getResources().getString(R.string.offline));
+                    txtDebug.setVisibility(View.VISIBLE);
+                    break;
+                case BBQService.MSG_PROBE_DATA:
+                    txtDebug.setVisibility(View.INVISIBLE);
+                    txtProbe1Temp.setText(msg.getData().getString("probe1temp"));
+                    txtProbe2Temp.setText(msg.getData().getString("probe2temp"));
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mService = new Messenger(service);
+            try {
+                Message msg = Message.obtain(null, BBQService.MSG_REGISTER_CLIENT);
+                msg.replyTo = mMessenger;
+                mService.send(msg);
+                sendSettings();
+            } catch (RemoteException e) {
+                // In this case the service has crashed before we could even do anything with it
+                Log.d("BBQ", "message to service is dead");
+            }
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // This is called when the connection with the service has been unexpectedly disconnected - process crashed.
+            mService = null;
+            //textStatus.setText("Disconnected.");
+        }
+    };
+
+    private void sendSettings() {
+        try {
+            Bundle bundle = new Bundle();
+            bundle.putString("deviceID", deviceID);
+            bundle.putString("particleAPIKEY", particleAPIKEY);
+            bundle.putInt("probe1Target", probe1Target);
+            bundle.putInt("probe2Target", probe2Target);
+            Message msg = Message.obtain(null, BBQService.MSG_SETTINGS);
+            msg.setData(bundle);
+            mService.send(msg);
+        } catch (RemoteException e) {
+            // In this case the service has crashed before we could even do anything with it
+            Log.d("BBQ", "message to service is dead");
+        }
+    }
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i("BBQ", "onResume");
-        mHandler.post(mBBQOnline);
+        Log.d("BBQ", "onResume");
+//        bindService(new Intent(this, BBQService.class), mConnection, Context.BIND_AUTO_CREATE);
+//        mIsBound = true;
+        //mHandler.post(mBBQOnline);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i("BBQ", "onPause");
-        HTTPClient.getInstance(getBaseContext()).cancellAll("BBQ_JSON");
-        mHandler.removeCallbacksAndMessages(null);
+        Log.d("BBQ", "onPause");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        service = new Intent(this, BBQService.class);
+        startService(service);
+        bindService(service, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mServiceConnected) {
+            unbindService(mConnection);
+        }
+        stopService(service);
     }
 
     @Override
@@ -133,113 +215,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTextFields() {
+        // TODO: accept service messages
         txtDebug.setVisibility(View.INVISIBLE);
-        txtProbe1Temp.setText(String.format("%.0f F", tempF));
+        //txtProbe1Temp.setText(String.format("%.0f F", tempF));
     }
 
     public void setKeepScreenOn(boolean keep_screen_on) {
         if (keep_screen_on) {
-            Log.i("BBQ", "keep screen on");
+            Log.d("BBQ", "keep screen on");
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
-            Log.i("BBQ", "Allow screen to turn off");
+            Log.d("BBQ", "Allow screen to turn off");
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
-    public void showNotification(String guts) {
-        PendingIntent pi = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
-        Resources r = getResources();
-        Notification notification = new NotificationCompat.Builder(this)
-                .setTicker("test1")
-                .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                .setContentTitle("BBQ Temp")
-                .setContentText(guts)
-                .setContentIntent(pi)
-                .setAutoCancel(true)
-                .build();
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(0, notification);
-    }
-
-
-    private Runnable mBBQOnline = new Runnable() {
-        @Override
-        public void run() {
-            String url = String.format("https://api.particle.io/v1/devices/%s?access_token=%s", deviceID, particleAPIKEY);
-//            Log.i("BBQ:URL", "mBBQOnline:" + url);
-            JsonObjectRequest jsonObjReq = new JsonObjectRequest(Method.GET,
-                    url, null, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    //Log.d("BBQOnline JSON response", response.toString());
-                    try {
-                        // Parsing json object response
-                        // response will be a json object
-                        Online = response.getBoolean("connected");
-                        if (Online) {
-                            mHandler.post(mBBQTemps);
-                        } else {
-                            txtDebug.setText(getResources().getString(R.string.offline));
-                            txtDebug.setVisibility(View.VISIBLE);
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    txtDebug.setText(getResources().getString(R.string.connection_error));
-                    txtDebug.setVisibility(View.VISIBLE);
-                    mHandler.postDelayed(mBBQOnline, 30000);
-                }
-            });
-            jsonObjReq.setTag("BBQ_JSON");
-            HTTPClient.getInstance(getBaseContext()).addToRequestQueue(jsonObjReq);
-        }
-    };
-
-    private Runnable mBBQTemps = new Runnable() {
-        @Override
-        public void run() {
-            String url = String.format("https://api.particle.io/v1/devices/%s/%s?access_token=%s", deviceID, "resistance", particleAPIKEY);
-//            Log.i("BBQ:URL", "mBBQTemps:" + url);
-            final SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-            final int targetTemp = Integer.parseInt(SP.getString("probe1Target", "999"));
-            JsonObjectRequest jsonObjReq = new JsonObjectRequest(Method.GET,
-                    url, null, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    //Log.d("BBQTemp JSON response", response.toString());
-                    try {
-                        // Parsing json object response
-                        // response will be a json object
-                        int resistance = response.getInt("result");
-                        double ln_resistance = Math.log(resistance);
-                        tempK = 1 / (steinhart_a + steinhart_b * ln_resistance + steinhart_c * (ln_resistance * ln_resistance * ln_resistance));
-                        tempC = tempK - 273.15;
-                        tempF = tempC * 1.8 + 32;
-                        // timestamp = row.getJSONObject("coreInfo").getJSONObject("last_heard");
-                        updateTextFields();
-                        mHandler.postDelayed(mBBQTemps, 60000);
-//                        if (tempF >= targetTemp) {
-//                            showNotification("Probe 1 reached the target temperature");
-//                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, new Response.ErrorListener() {
-                 @Override
-                 public void onErrorResponse(VolleyError error) {
-                     txtDebug.setText(getResources().getString(R.string.connection_error));
-                     txtDebug.setVisibility(View.VISIBLE);
-                     mHandler.postDelayed(mBBQOnline, 30000);
-                 }
-            });
-            jsonObjReq.setTag("BBQ_JSON");
-            HTTPClient.getInstance(getBaseContext()).addToRequestQueue(jsonObjReq);
-        }
-    };
+//    private ServiceConnection mServiceConnection = new ServiceConnection() {
+//        @Override
+//        public void onServiceDisconnected(ComponentName name) {
+//            mBBQServiceMessenger = null;
+//            mServiceConnected = false;
+//        }
+//
+//        @Override
+//        public void onServiceConnected(ComponentName name, IBinder service) {
+//            mBBQServiceMessenger = new Messenger(service);
+//            mServiceConnected = true;
+//        }
+//    };
 }
