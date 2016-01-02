@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -19,14 +21,12 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.view.View;
 import android.widget.TextView;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.android.volley.toolbox.JsonObjectRequest;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -55,6 +55,7 @@ public class BBQService extends Service {
     private static String particleAPIKEY = null;
     private Handler mHandler = new Handler();
     private int probe1Target, probe2Target;
+    private boolean notify;
     private RequestQueue reQueue;
 
     class BBQServiceHandler extends Handler {
@@ -82,6 +83,7 @@ public class BBQService extends Service {
                     particleAPIKEY = msg.getData().getString("particleAPIKEY");
                     probe1Target = msg.getData().getInt("probe1Target");
                     probe2Target = msg.getData().getInt("probe2Target");
+                    notify = msg.getData().getBoolean("notify");
                     break;
                 default:
                     super.handleMessage(msg);
@@ -227,7 +229,7 @@ public class BBQService extends Service {
                             Log.d(LOG_TAG_TEMP, "can't message UI");
                         }
                         mHandler.postDelayed(mBBQOnline, 60000);
-                        if (tempF >= probe1Target) {
+                        if (tempF >= probe1Target && notify) {
                             showNotification("Probe 1 reached the target temperature");
                         }
                     } catch (JSONException e) {
@@ -260,17 +262,18 @@ public class BBQService extends Service {
 
     public void showNotification(String guts) {
         Intent intent = new Intent(this, MainActivity.class);
+        // key to restoring activity and not re-launching
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        //PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
-        Resources r = getResources();
+        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
         Notification notification = new NotificationCompat.Builder(this)
                 .setTicker("test1")
-                .setSmallIcon(android.R.drawable.ic_menu_report_image)
+//                .setSmallIcon(android.R.drawable.ic_menu_report_image)
+                .setSmallIcon(android.R.drawable.ic_media_play)
                 .setContentTitle("BBQ Temp")
                 .setContentText(guts)
                 .setContentIntent(pi)
                 .setAutoCancel(true)
+                .setDefaults(Notification.DEFAULT_ALL)
                 .build();
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

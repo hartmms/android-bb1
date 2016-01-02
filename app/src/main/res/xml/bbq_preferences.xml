@@ -37,10 +37,16 @@
     <PreferenceCategory
         android:title="App Settings">
 
-    <CheckBoxPreference
-        android:key="keep_screen_on"
-        android:title="Keep Screen On"
-        android:summary="Stops the device screen powering off" />
+      <CheckBoxPreference
+          android:key="keep_screen_on"
+          android:title="Keep Screen On"
+          android:summary="Stops the device screen powering off" />
+
+        <CheckBoxPreference
+            android:key="notify"
+            android:title="Enable Notifications"
+            android:summary="Enable temperature probe notifications" />
+
     </PreferenceCategory>
 
 
