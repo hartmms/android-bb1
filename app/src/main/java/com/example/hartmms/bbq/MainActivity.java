@@ -35,13 +35,15 @@ public class MainActivity extends AppCompatActivity {
     TextView txtProbe1Temp;
     TextView txtProbe2Temp;
     TextView txtDebug;
-    static String deviceID;
-    static String particleAPIKEY;
+//    static String deviceID;
+//    static String particleAPIKEY;
     Messenger mService = null;
     boolean notify;
+    boolean serviceConnected;
     final Messenger mMessenger = new Messenger(new IncomingHandler());
     Intent service;
-    int probe1Target, probe2Target;
+//    int probe1Target, probe2Target;
+    SharedPreferences SP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,34 +56,34 @@ public class MainActivity extends AppCompatActivity {
         bindService(service, mConnection, Context.BIND_AUTO_CREATE);
 
         // Setup settings
-        final SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
-        deviceID = SP.getString("deviceID", null);
-        particleAPIKEY = SP.getString("particleAPIKEY", null);
-        probe1Target = Integer.parseInt(SP.getString("probe1Target", "999"));
-        probe2Target = Integer.parseInt(SP.getString("probe2Target", "999"));
-        notify = SP.getBoolean("notify", false);
-        SharedPreferences.OnSharedPreferenceChangeListener listener;
-        listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-                Log.d("BBQ", "Found a changed preference:" + key);
-                if (key.equals("keep_screen_on")) {
-                    setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
-                } else if (key.equals("deviceID")) {
-                    deviceID = SP.getString("deviceID", null);
-                } else if (key.equals("particleAPIKEY")) {
-                    particleAPIKEY = SP.getString("particleAPIKEY", null);
-                } else if (key.equals("probe1Target")) {
-                    probe1Target = Integer.parseInt(SP.getString("probe1Target", "999"));
-                } else if (key.equals("probe2Target")) {
-                    probe2Target = Integer.parseInt(SP.getString("probe2Target", "999"));
-                } else if (key.equals("notify")) {
-                    notify = SP.getBoolean("notify", false);
-                }
-                sendSettings();
-            }
-        };
-        SP.registerOnSharedPreferenceChangeListener(listener);
+//        deviceID = SP.getString("deviceID", null);
+//        particleAPIKEY = SP.getString("particleAPIKEY", null);
+//        probe1Target = Integer.parseInt(SP.getString("probe1Target", "999"));
+//        probe2Target = Integer.parseInt(SP.getString("probe2Target", "999"));
+//        notify = SP.getBoolean("notify", false);
+//        SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+//            @Override
+//            public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+//                Log.d("BBQ", "Found a changed preference:" + key);
+//                if (key.equals("keep_screen_on")) {
+//                    setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
+//                } else if (key.equals("deviceID")) {
+//                    deviceID = SP.getString("deviceID", null);
+//                } else if (key.equals("particleAPIKEY")) {
+//                    particleAPIKEY = SP.getString("particleAPIKEY", null);
+//                } else if (key.equals("probe1Target")) {
+//                    probe1Target = Integer.parseInt(SP.getString("probe1Target", "999"));
+//                } else if (key.equals("probe2Target")) {
+//                    probe2Target = Integer.parseInt(SP.getString("probe2Target", "999"));
+//                } else if (key.equals("notify")) {
+//                    notify = SP.getBoolean("notify", false);
+//                }
+//                sendSettings();
+//            }
+//        };
+//        SP.registerOnSharedPreferenceChangeListener(listener);
 
         // setup default app view
         setContentView(R.layout.activity_main);
@@ -107,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         Log.d("BBQ", "onStart");
+        if (serviceConnected)
+            sendSettings();
         super.onStart();
     }
 
@@ -149,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
+            serviceConnected = true;
             mService = new Messenger(service);
             try {
                 Message msg = Message.obtain(null, BBQService.MSG_REGISTER_CLIENT);
@@ -164,11 +169,18 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceDisconnected(ComponentName className) {
             // This is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
+            serviceConnected = false;
             //textStatus.setText("Disconnected.");
         }
     };
 
     private void sendSettings() {
+        setKeepScreenOn(SP.getBoolean("keep_screen_on", false));
+        String deviceID = SP.getString("deviceID", null);
+        String particleAPIKEY = SP.getString("particleAPIKEY", null);
+        int probe1Target = Integer.parseInt(SP.getString("probe1Target", "999"));
+        int probe2Target = Integer.parseInt(SP.getString("probe2Target", "999"));
+        boolean notify = SP.getBoolean("notify", false);
         try {
             Bundle bundle = new Bundle();
             bundle.putString("deviceID", deviceID);
@@ -210,7 +222,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTextFields() {
-        // TODO: accept service messages
         txtDebug.setVisibility(View.INVISIBLE);
         //txtProbe1Temp.setText(String.format("%.0f F", tempF));
     }
