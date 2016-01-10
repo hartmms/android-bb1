@@ -1,8 +1,19 @@
 package com.example.hartmms.bbq;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import android.graphics.Color;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TimeZone;
+
 import android.os.Bundle;
-//import android.support.design.widget.FloatingActionButton;
-//import android.support.design.widget.Snackbar;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -12,11 +23,6 @@ import android.content.Intent;
 import android.widget.TextView;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.res.Resources;
-import android.support.v4.app.NotificationCompat;
 import android.view.WindowManager;
 import android.util.Log;
 import android.os.Message;
@@ -27,10 +33,25 @@ import android.content.ComponentName;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.Handler;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.components.YAxis.AxisDependency;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
+//import com.github.mikephil.charting.data.filter.Approximator;
+//import com.github.mikephil.charting.data.filter.Approximator.ApproximatorType;
+//import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+//import com.github.mikephil.charting.listener.ChartTouchListener;
+//import com.github.mikephil.charting.listener.OnChartGestureListener;
+//import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 
 public class MainActivity extends AppCompatActivity {
 
-//    LineChart chart1;
+    LineChart chart1;
 
     TextView txtProbe1Temp;
     TextView txtProbe2Temp;
@@ -92,6 +113,97 @@ public class MainActivity extends AppCompatActivity {
         txtDebug = (TextView) findViewById(R.id.txtDebug);
         txtProbe1Temp = (TextView) findViewById(R.id.txtProbe1Temp);
         txtProbe2Temp = (TextView) findViewById(R.id.txtProbe2Temp);
+
+        // Line graph of temps
+        chart1 = (LineChart) findViewById(R.id.chart1);
+        chart1.setDrawGridBackground(false);
+        chart1.getLegend().setEnabled(false);
+        chart1.getAxisRight().setEnabled(false);
+        chart1.setDescription("");
+        chart1.setNoDataText("");
+        chart1.setHardwareAccelerationEnabled(true);
+        chart1.setData(new LineData());
+        // yaxis
+        YAxis yAxis = chart1.getAxisLeft();
+        yAxis.setEnabled(false);
+        yAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
+        yAxis.setDrawGridLines(false);
+        yAxis.setDrawAxisLine(false);
+        yAxis.setTextColor(Color.LTGRAY);
+        yAxis.setTextSize(getResources().getInteger(R.integer.chartDateTextSize));
+        yAxis.setStartAtZero(false);
+        // xaxis
+        XAxis xAxis = chart1.getXAxis();
+        xAxis.setDrawAxisLine(false);
+        xAxis.setDrawGridLines(false);
+        xAxis.setDrawLabels(true);
+        xAxis.setPosition(XAxis.XAxisPosition.TOP);
+        xAxis.setTextColor(Color.LTGRAY);
+        xAxis.setSpaceBetweenLabels(0);
+        xAxis.setTextSize(getResources().getInteger(R.integer.chartDateTextSize));
+
+//        FloatingActionButton exitButton = (FloatingActionButton) findViewById(R.id.exit);
+//        exitButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+                //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+//                finish();
+                //dummyData();
+//          }
+//        });
+    }
+
+    private void addEntry(int entry) {
+        LineData data = chart1.getData();
+        ILineDataSet set = data.getDataSetByIndex(0);
+        if (set == null) {
+            set = createSet();
+            data.addDataSet(set);
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm", Locale.US);
+        data.addXValue(sdf.format(new Date()));
+        data.addEntry(new Entry(entry, set.getEntryCount()), 0);
+        // set data
+        chart1.getAxisLeft().setEnabled(true);
+        chart1.notifyDataSetChanged();
+        chart1.moveViewToX(0);
+    }
+
+    private void dummyData() {
+        LineData data = chart1.getData();
+        ILineDataSet set = data.getDataSetByIndex(0);
+        if (set == null) {
+            set = createSet();
+            data.addDataSet(set);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:", Locale.US);
+        String d = sdf.format(new Date());
+
+        for (int i=30; i<=35; i++) {
+            data.addXValue(d+Integer.toString(i));
+            data.addEntry(new Entry(100+i, set.getEntryCount()), 0);
+        }
+        // set data
+        chart1.getAxisLeft().setEnabled(true);
+        chart1.notifyDataSetChanged();
+        chart1.moveViewToX(0);
+    }
+
+    private LineDataSet createSet() {
+        LineDataSet set = new LineDataSet(null, "Dynamic Data");
+        set.setAxisDependency(AxisDependency.LEFT);
+        set.setColor(ColorTemplate.getHoloBlue());
+        set.setCircleColor(Color.WHITE);
+        set.setLineWidth(2f);
+        set.setCircleSize(2f);
+        set.setFillAlpha(65);
+        set.setFillColor(ColorTemplate.getHoloBlue());
+        set.setHighLightColor(Color.rgb(244, 117, 117));
+        set.setValueTextColor(Color.WHITE);
+        set.setValueTextSize(9f);
+        set.setDrawValues(false);
+        return set;
     }
 
     @Override
@@ -142,8 +254,10 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case BBQService.MSG_PROBE_DATA:
                     txtDebug.setVisibility(View.INVISIBLE);
-                    txtProbe1Temp.setText(msg.getData().getString("probe1temp"));
-                    txtProbe2Temp.setText(msg.getData().getString("probe2temp"));
+                    String probe1Data = msg.getData().getString("probe1temp");
+                    addEntry(Integer.parseInt(probe1Data));
+                    txtProbe1Temp.setText(probe1Data+" °F");
+                    txtProbe2Temp.setText(msg.getData().getString("probe2temp")+" °F");
                     break;
                 default:
                     super.handleMessage(msg);
@@ -209,16 +323,25 @@ public class MainActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Intent i = new Intent(this, SettingsActivity.class);
-            startActivity(i);
-            return true;
+        switch (item.getItemId()) {
+            case R.id.clear_chart: {
+                chart1.clearValues();
+                break;
+            }
+//            case R.id.dummy_data: {
+//                dummyData();
+//                break;
+//            }
+            case R.id.action_settings: {
+                Intent i = new Intent(this, SettingsActivity.class);
+                startActivity(i);
+                break;
+            }
+            case R.id.exit: {
+                finish();
+            }
         }
-
-        return super.onOptionsItemSelected(item);
+        return true;
     }
 
     private void updateTextFields() {

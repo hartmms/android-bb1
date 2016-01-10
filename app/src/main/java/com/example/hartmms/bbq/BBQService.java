@@ -214,8 +214,9 @@ public class BBQService extends Service {
                         try {
                             if (clientOnline) {
                                 Bundle b = new Bundle();
-                                b.putString("probe1temp", Integer.toString(tempF)+" F");
-                                b.putString("probe2temp", "- F");
+                                b.putString("probe1temp", Integer.toString(tempF));
+                                // TODO: put in probe2 calc formulas here.
+                                b.putString("probe2temp", "-");
                                 Message msg = Message.obtain(null, MSG_PROBE_DATA);
                                 msg.setData(b);
                                 mClient.send(msg);

@@ -7,4 +7,23 @@
         android:orderInCategory="100"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/clear_chart"
+        android:orderInCategory="100"
+        android:title="@string/clear_chart"
+        app:showAsAction="never" />
+<!--
+    <item
+        android:id="@+id/dummy_data"
+        android:orderInCategory="100"
+        android:title="@string/dummy_data"
+        app:showAsAction="never" />
+-->
+    <item
+        android:id="@+id/exit"
+        android:orderInCategory="100"
+        android:title="@string/exit"
+        app:showAsAction="never" />
+
 </menu>

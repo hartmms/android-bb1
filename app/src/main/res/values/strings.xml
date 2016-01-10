@@ -3,15 +3,18 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_settings">BBQ Settings</string>
 
-    <string name="probe1_txt">Probe 1</string>
-    <string name="probe2_txt">Probe 2</string>
+    <string name="probe1_txt">Meat Temp</string>
+    <string name="probe2_txt">Grill Temp</string>
 
 
     <string name="init">Initializing</string>
     <string name="settings">Settings</string>
+    <string name="clear_chart">Reset Chart</string>
+    <string name="dummy_data">Inject Dummy Data</string>
+    <string name="exit">Exit</string>
     <string name="offline">Device is Offline</string>
 
-    <string name="txtProbeDefault">- F</string>
+    <string name="txtProbeDefault">- °F</string>
 
     <string name="connection_error">Connection Error</string>
 </resources>

@@ -23,15 +23,16 @@
         android:title="Target Temperatures">
         <EditTextPreference
             android:key="probe1Target"
-            android:title="Probe 1 Target Temperature"
+            android:title="Meat Target Temperature"
             android:numeric="integer"
             android:defaultValue="999" />
-
+<!--
         <EditTextPreference
             android:key="probe2Target"
-            android:title="Probe 2 Target Temperature"
+            android:title="Grill Target Temperature"
             android:numeric="integer"
             android:defaultValue="999" />
+-->
     </PreferenceCategory>
 
     <PreferenceCategory
