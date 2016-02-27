@@ -122,19 +122,21 @@ public class MainActivity extends AppCompatActivity {
         chart1.setDescription("");
         chart1.setNoDataText("");
         chart1.setHardwareAccelerationEnabled(true);
+        chart1.setHighlightPerTapEnabled(false);
+        chart1.setHighlightPerDragEnabled(false);
         chart1.setData(new LineData());
         // yaxis
         YAxis yAxis = chart1.getAxisLeft();
         yAxis.setEnabled(false);
         yAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        yAxis.setDrawGridLines(false);
-        yAxis.setDrawAxisLine(false);
+        yAxis.setDrawGridLines(true);
+        yAxis.setDrawAxisLine(true);
         yAxis.setTextColor(Color.LTGRAY);
         yAxis.setTextSize(getResources().getInteger(R.integer.chartDateTextSize));
         yAxis.setStartAtZero(false);
         // xaxis
         XAxis xAxis = chart1.getXAxis();
-        xAxis.setDrawAxisLine(false);
+        xAxis.setDrawAxisLine(true);
         xAxis.setDrawGridLines(false);
         xAxis.setDrawLabels(true);
         xAxis.setPosition(XAxis.XAxisPosition.TOP);
@@ -160,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
             set = createSet();
             data.addDataSet(set);
         }
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("h:mm", Locale.US);
         data.addXValue(sdf.format(new Date()));
         data.addEntry(new Entry(entry, set.getEntryCount()), 0);
         // set data
@@ -169,29 +171,29 @@ public class MainActivity extends AppCompatActivity {
         chart1.moveViewToX(0);
     }
 
-    private void dummyData() {
-        LineData data = chart1.getData();
-        ILineDataSet set = data.getDataSetByIndex(0);
-        if (set == null) {
-            set = createSet();
-            data.addDataSet(set);
-        }
-
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:", Locale.US);
-        String d = sdf.format(new Date());
-
-        for (int i=30; i<=35; i++) {
-            data.addXValue(d+Integer.toString(i));
-            data.addEntry(new Entry(100+i, set.getEntryCount()), 0);
-        }
-        // set data
-        chart1.getAxisLeft().setEnabled(true);
-        chart1.notifyDataSetChanged();
-        chart1.moveViewToX(0);
-    }
+//    private void dummyData() {
+//        LineData data = chart1.getData();
+//        ILineDataSet set = data.getDataSetByIndex(0);
+//        if (set == null) {
+//            set = createSet();
+//            data.addDataSet(set);
+//        }
+//
+//        SimpleDateFormat sdf = new SimpleDateFormat("h:mm:", Locale.US);
+//        String d = sdf.format(new Date());
+//
+//        for (int i=30; i<=35; i++) {
+//            data.addXValue(d+Integer.toString(i));
+//            data.addEntry(new Entry(100+i, set.getEntryCount()), 0);
+//        }
+//        // set data
+//        chart1.getAxisLeft().setEnabled(true);
+//        chart1.notifyDataSetChanged();
+//        chart1.moveViewToX(0);
+//    }
 
     private LineDataSet createSet() {
-        LineDataSet set = new LineDataSet(null, "Dynamic Data");
+        LineDataSet set = new LineDataSet(null, getResources().getString(R.string.probe1_txt));
         set.setAxisDependency(AxisDependency.LEFT);
         set.setColor(ColorTemplate.getHoloBlue());
         set.setCircleColor(Color.WHITE);
@@ -325,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         switch (item.getItemId()) {
             case R.id.clear_chart: {
-                chart1.clearValues();
+                chart1.clear();
                 break;
             }
 //            case R.id.dummy_data: {

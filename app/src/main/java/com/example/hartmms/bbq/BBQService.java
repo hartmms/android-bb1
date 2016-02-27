@@ -264,7 +264,7 @@ public class BBQService extends Service {
         Notification notification = new NotificationCompat.Builder(this)
                 .setTicker("test1")
 //                .setSmallIcon(android.R.drawable.ic_menu_report_image)
-                .setSmallIcon(android.R.drawable.ic_media_play)
+                .setSmallIcon(R.drawable.ic_notificaion)
                 .setContentTitle("BBQ Temp")
                 .setContentText(guts)
                 .setContentIntent(pi)
